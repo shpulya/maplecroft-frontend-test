@@ -15,7 +15,7 @@ You can rotate and zoom in and out on the globe, hovering over a country will sh
 
 You've been asked to make some improvements to this application, listed below are your tasks.
 
-* Some countries do not have scores shown for some reason even though the API response includes those scores. In particular the client needs France and Libya to work, you need to make a change so that the scores/colour coding for those countries work.
+* Some countries do not have scores shown for some reason even though the API response includes those scores. In particular the client needs France and Norway to work, you need to make a change so that the scores/colour coding for those countries work.
 
 * Currently the API call is done from AppComponent, we would like this to be in a separate service.
 
