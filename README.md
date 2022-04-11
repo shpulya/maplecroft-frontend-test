@@ -24,3 +24,7 @@ You've been asked to make some improvements to this application, listed below ar
 * Implement tests for your new data service and ensure existing tests work. (This application uses Jasmine/Karma, however feel free to convert it to Jest if you wish)
 
 * To help your Team Lead plan for future development of this application provide a brief list of issues and/or improvements that could be made to this application.
+
+## Submission of Completed Test
+
+**Please do not fork this repository directly**, instead download/clone it, make your changes and upload to a new separate repository (e.g. GitHub, BitBucket etc.) or create a zip file from your local repo.
