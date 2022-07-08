@@ -1,46 +1,73 @@
-import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+
 import * as d3 from 'd3';
 import { event as d3Event } from 'd3-selection';
 import * as R from 'ramda';
 
-function getScoreColour(score: number | null, defaultColor = 'LightGray') {
-    if (R.isNil(score) || Number.isNaN(score) || score > 10) {
-        return defaultColor;
-    }
-    if (score <= 2.5) {
-        return '#ce181f';
-    }
-    if (score <= 5) {
-        return '#f47721';
-    }
-    if (score <= 7.5) {
-        return '#ffc709';
-    }
-    return '#d6e040';
+import { AppService } from './app.service';
+
+function getScoreColour(score: number | null, defaultColor = 'LightGray'): string {
+  if (R.isNil(score) || Number.isNaN(score) || score > 10) {
+    return defaultColor;
+  }
+  if (score <= 2.5) {
+    return '#ce181f';
+  }
+  if (score <= 5) {
+    return '#f47721';
+  }
+  if (score <= 7.5) {
+    return '#ffc709';
+  }
+  return '#d6e040';
 }
 
-
+// TODO: Delete this function after the data will be correctly updated on backend side,
+//       ISO_A2 for France & Norway were taken from https://country-code.cl/
+function getCountryCode(code: string, name: string): string {
+  if (code !== '-99') {
+    return code;
+  }
+  if (name === 'France') {
+    return 'FR';
+  }
+  if (name === 'Norway') {
+    return 'NO';
+  }
+  return code;
+}
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'globe-demo';
-
-  private countryData;
   public countryDetails: string | undefined;
 
-  constructor(private readonly http: HttpClient) {
-    this.http.get<any>('./assets/data.json').subscribe(x => {
-      this.countryData = x;
-      this.loadGlobe();
-    })
+  private countryData;
+  private readonly destroy$: Subject<void> = new Subject();
+
+  constructor(private appService: AppService) {}
+
+  public ngOnInit(): void {
+    this.appService.getData()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(x => {
+        this.countryData = x;
+        this.loadGlobe();
+      });
   }
 
-  private loadGlobe() {
+  public ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadGlobe(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;
     const sensitivity = 75;
@@ -98,29 +125,29 @@ export class AppComponent {
         .selectAll('path')
         .data(d.features)
         .enter().append('path')
-        .attr('class', (d: any) => 'country_' + d.properties.ISO_A2)
+        .attr('class', (d: any) => 'country_' + getCountryCode(d.properties.ISO_A2, d.properties.NAME))
         .attr('d', path)
-        .attr('fill', (d: any) => getScoreColour(this.getCountryScore(d.properties.ISO_A2)))
+        .attr('fill', (d: any) => getScoreColour(this.getCountryScore(getCountryCode(d.properties.ISO_A2, d.properties.NAME))))
         .style('stroke', 'black')
         .style('stroke-width', 0.3)
-        .on('mouseleave', (d: any) => this.clearDetails())
-        .on('mouseover', (d: any) => this.showDetails(d.properties.ISO_A2, d.properties.NAME));
+        .on('mouseleave', () => this.clearDetails())
+        .on('mouseover', (d: any) => this.showDetails(getCountryCode(d.properties.ISO_A2, d.properties.NAME), d.properties.NAME));
     });
 
   }
 
   private getCountryScore(countryCode: string): number | undefined {
     const country = this.countryData[countryCode];
-    return country ? country.score : undefined;
+    return country && country.entitled ? country.score : undefined;
   }
 
-  private clearDetails() {
+  private clearDetails(): void {
     this.countryDetails = undefined;
   }
 
-  private showDetails(countryCode: string, countryName: string) {
+  private showDetails(countryCode: string, countryName: string): void {
     const country = this.countryData[countryCode];
-    if (!country) {
+    if (!country || !country.entitled) {
       this.countryDetails = undefined;
       return;
     }

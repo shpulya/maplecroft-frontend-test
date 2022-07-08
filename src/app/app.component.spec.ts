@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+
 import { AppComponent } from './app.component';
+import { AppService } from './app.service';
 
 describe('AppComponent', () => {
   let component: AppComponent;
@@ -7,8 +10,14 @@ describe('AppComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      imports: [
+        HttpClientTestingModule
+      ],
       declarations: [
         AppComponent
+      ],
+      providers: [
+        AppService
       ],
     }).compileComponents();
 
@@ -23,8 +32,7 @@ describe('AppComponent', () => {
 
   it(`country details box should have correct title`, () => {
     const scoreBox: HTMLElement = fixture.nativeElement.querySelector('.country-details');
-    
+
     expect(scoreBox.textContent).toEqual(`Client's Risk Portfolio`);
   });
-
 });
